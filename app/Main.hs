@@ -14,6 +14,19 @@ data LispValue
     | Bool Bool
     deriving (Show)
 
+parseAtom :: Parser LispValue
+parseAtom = do
+    first <- letter <|> symbol
+    rest  <- many (letter <|> digit <|> symbol)
+    let atom = first : rest
+    return $ case atom of
+        "#t" -> Bool True
+        "#f" -> Bool False
+        _    -> Atom atom
+
+parseNumber :: Parser LispValue
+parseNumber = many1 digit >>= \ s -> return $ Number $ read s
+    
 parseString :: Parser LispValue
 parseString = do
     char '"'
@@ -22,7 +35,10 @@ parseString = do
     return $ String body
 
 parseExpression :: Parser LispValue
-parseExpression = parseString
+parseExpression = 
+    parseAtom   <|>
+    parseString <|>
+    parseNumber
 
 main :: IO ()
 main = do
