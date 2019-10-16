@@ -3,6 +3,7 @@ module Main where
 import Lib
 
 import Text.ParserCombinators.Parsec hiding (spaces)
+import Numeric
 import System.Environment
 
 data LispValue 
@@ -10,8 +11,9 @@ data LispValue
     | List [LispValue]
     | DottedList [LispValue] LispValue
     | Number Integer
+    | Character Char
     | String String
-    | Bool Bool
+    | Boolean Bool
     deriving (Show)
 
 parseAtom :: Parser LispValue
@@ -20,24 +22,35 @@ parseAtom = do
     rest  <- many (letter <|> digit <|> symbol)
     let atom = first : rest
     return $ case atom of
-        "#t" -> Bool True
-        "#f" -> Bool False
+        "#t" -> Boolean True
+        "#f" -> Boolean False
         _    -> Atom atom
 
 parseNumber :: Parser LispValue
 parseNumber = Number . read <$> many1 digit 
-    
+
+parseEscape :: Parser Char
+parseEscape = foldl1 (<|>) $ char <$> "\"\\\a\t\r\n"
+
+parseCharacter :: Parser LispValue
+parseCharacter = do
+    char '\''
+    c <- alphaNum
+    char '\''
+    return $ Character c
+
 parseString :: Parser LispValue
 parseString = do
     char '"'
-    body <- many (noneOf "\"")
+    body <- many (noneOf "\"" <|> parseEscape)
     char '"'
     return $ String body
 
 parseExpression :: Parser LispValue
 parseExpression = 
-    parseAtom   <|>
-    parseString <|>
+    parseAtom      <|>
+    parseString    <|>
+    parseCharacter <|>
     parseNumber
 
 main :: IO ()
