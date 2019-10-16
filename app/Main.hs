@@ -5,6 +5,25 @@ import Lib
 import Text.ParserCombinators.Parsec hiding (spaces)
 import System.Environment
 
+data LispValue 
+    = Atom String
+    | List [LispValue]
+    | DottedList [LispValue] LispValue
+    | Number Integer
+    | String String
+    | Bool Bool
+    deriving (Show)
+
+parseString :: Parser LispValue
+parseString = do
+    char '"'
+    body <- many (noneOf "\"")
+    char '"'
+    return $ String body
+
+parseExpression :: Parser LispValue
+parseExpression = parseString
+
 main :: IO ()
 main = do
     putStr "=> "
@@ -13,14 +32,14 @@ main = do
         then 
             putStrLn "Bye for now."
         else do
-            putStrLn $ readExpr input
+            putStrLn $ readExpression input
             main
 
-readExpr :: String -> String
-readExpr input =
-    case parse (spaces >> symbol) "user_input" input of
+readExpression :: String -> String
+readExpression input =
+    case parse parseExpression "user_input" input of
         Left error -> "No Match: " ++ show error
-        Right value -> "Found Value"
+        Right value -> "Found Value: " ++ show value
 
 symbol :: Parser Char
 symbol = oneOf "!#$%&|*+-/:<=>?@^_~"
