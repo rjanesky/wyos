@@ -10,7 +10,8 @@ data LispValue
     = Atom String
     | List [LispValue]
     | DottedList [LispValue] LispValue
-    | Number Integer
+    | Float Float
+    | Integer Integer
     | Character Char
     | String String
     | Boolean Bool
@@ -26,8 +27,18 @@ parseAtom = do
         "#f" -> Boolean False
         _    -> Atom atom
 
+parseFloat :: Parser LispValue
+parseFloat = do
+    prefix <- many1 digit
+    char '.'
+    suffix <- many1 digit
+    return $ Float $ read $ prefix ++ "." ++ suffix
+
+parseInteger :: Parser LispValue
+parseInteger = Integer . read <$> many1 digit 
+
 parseNumber :: Parser LispValue
-parseNumber = Number . read <$> many1 digit 
+parseNumber = try parseFloat <|> parseInteger
 
 parseEscape :: Parser Char
 parseEscape = foldl1 (<|>) $ char <$> "\"\\\a\t\r\n"
