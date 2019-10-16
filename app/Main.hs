@@ -25,7 +25,7 @@ parseAtom = do
         _    -> Atom atom
 
 parseNumber :: Parser LispValue
-parseNumber = many1 digit >>= \ s -> return $ Number $ read s
+parseNumber = Number . read <$> many1 digit 
     
 parseString :: Parser LispValue
 parseString = do
